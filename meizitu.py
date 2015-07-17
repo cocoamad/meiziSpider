@@ -20,7 +20,9 @@ class PicItem(object):
 	def __init__(self, title, url, path):
 		self.title = title
 		self.url = url
-		self.download(path)
+
+		print title
+		print ur
 
 	def download(self, path):
 		urllib.urlretrieve(self.url, '%s/%s.png' % (path, self.title))
@@ -43,7 +45,7 @@ class PageItem(object):
 
 		self.parseItem(html)
 
-	def parseItem(self, html,):
+	def parseItem(self, html):
 		if html:
 			m = re.search(regx.req_page_item_title_1, html, re.S)
 			if m:
@@ -92,10 +94,13 @@ class Tag(object):
 		#保存所有的子页面包含的图片组PageItem
 		self.items = []
 
+		self.html = html
+
 		# tag名字
 		self.name = ""
 
-		self.parseTagNameAndUrls(html)
+	def startParse():
+		self.parseTagNameAndUrls(self.html)
 
 	def parseTagNameAndUrls(self, html):
 		url_result = re.search(regx.req_tag_url, html, re.S)
@@ -142,9 +147,17 @@ class Tag(object):
 				items.append(item)
 		return items
 
+
+
+
+
+
+
+
 		
 def findAllTags(url):
 	tags = []
+
 	rootPage = urllib.urlopen(g_root_url)
 	rootHtml = rootPage.read()
 	req = r'(?<=div class="tags">).*?(?=</div>)'
@@ -163,9 +176,22 @@ def findAllTags(url):
 				tags.append(tag)
 		else:
 			print "found sub tag error"
+
 	else:
 		print "found  error"
 	return tags
 
 if __name__ == '__main__':
+	threadList = []
 	tags = findAllTags(g_root_url)
+	for tag in tags:
+		print tag.name
+		threadList.append(threading.Thread(target=tag.startParse,name=tag.html))
+
+	for thread in threadList:
+		thread.start()
+	for thread in threadList:
+		thread.join()
+
+	for tag in tags:
+		print "%s has %d item" % (tag.name ,len(tag.items))
